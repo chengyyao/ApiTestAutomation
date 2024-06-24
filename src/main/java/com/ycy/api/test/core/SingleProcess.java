@@ -2,6 +2,7 @@ package com.ycy.api.test.core;
 
 import cn.hutool.core.io.FileUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.ycy.api.test.util.ResourcePath;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ public class SingleProcess implements Strategy<String> {
      */
     @Override
     public ArrayList<JsonBean> process(String fileName) {
-        String resourcesPath = getResourcePath();
+        String resourcesPath = ResourcePath.getResourcePath();
         File file = new File(resourcesPath + fileName);
         //文件转成字符串
         String json = FileUtil.readString(file, "utf-8");

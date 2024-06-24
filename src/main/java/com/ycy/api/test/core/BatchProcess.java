@@ -2,6 +2,7 @@ package com.ycy.api.test.core;
 
 import cn.hutool.core.io.FileUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.ycy.api.test.util.ResourcePath;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ public class BatchProcess implements Strategy<String[]> {
     @Override
     public ArrayList<JsonBean> process(String[] packageName) {
         ArrayList<JsonBean> arrayList = new ArrayList<>();
-        String resourcePath = getResourcePath();
+        String resourcePath = ResourcePath.getResourcePath();
         for (int i = 0; i < packageName.length; i++) {
             String s = resourcePath + File.separator + packageName[i] + File.separator + META_DATA_FILE;
             File[] files = new File(s).listFiles(); // 获取当前包路径下所有文件

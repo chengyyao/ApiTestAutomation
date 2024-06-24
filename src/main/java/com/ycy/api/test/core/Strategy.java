@@ -3,14 +3,12 @@ package com.ycy.api.test.core;
 import cn.hutool.core.io.FileUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.ycy.api.test.util.CustomizeException;
+import com.ycy.api.test.util.ResourcePath;
 
 import java.io.File;
 import java.net.URL;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Random;
+import java.util.*;
 
 /**
  * @author yaocy
@@ -18,16 +16,11 @@ import java.util.Random;
  * @description 策略模式接口
  */
 public interface Strategy<T> {
-
-    String authorizationFilePath = "Authorization.conf";
-
+    String PublicParamFilePath = "PublicParamConfig.conf";
     static String randomStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
     String META_DATA_FILE = "data";
     String META_PARAMS_FILE = "params";
-
     ArrayList<JsonBean> process(T t);
-
 
     /**
      * @param file
@@ -35,16 +28,25 @@ public interface Strategy<T> {
      */
     default void combParams(File file, JsonBean jsonBean) {
         // 根据传入的文件路径，解析文件内容为字符串，然后取authorization 的值 set到jsonBean中
-        File authorizationFile = new File(getResourcePath() + authorizationFilePath);
+        File PublicParamFile = new File(ResourcePath.getResourcePath() + PublicParamFilePath);
         //文件转成字符串
-        String authorization = FileUtil.readString(authorizationFile, "utf-8");
+        String PublicParam = FileUtil.readString(PublicParamFile, "utf-8");
+        // 字符串转成json
+        JSONObject PublicParamJson = JSONObject.parseObject(PublicParam);
         //字符串的值，存入jsonBean
+        String authorization = PublicParamJson.getString("authorization");
         jsonBean.setAuthorization(authorization.trim());
-        //根据传入的file，取到它上级的上级全路径
+        // 替换url
+        String host = PublicParamJson.getString("host");
+        jsonBean.setUrl(host + jsonBean.getUrl());
+        jsonBean.setPostUrl(host + jsonBean.getPostUrl());
+        //根据传入的参数文件file，取到它上级的上级全路径
         String paramsFileName = Paths.get(file.getParentFile().getParent(), META_PARAMS_FILE, file.getName()).toString();
         File paramsFile = new File(paramsFileName);
         String paramJson = FileUtil.readString(paramsFile, "utf-8");
         JSONObject jsonObject = JSONObject.parseObject(paramJson);
+        // 省略一步
+//        Set<Map.Entry<String, Object>> entries = jsonObject.entrySet();
         for (Map.Entry<String, Object> stringObjectEntry : jsonObject.entrySet()) {
             jsonBean.setUrl(replaceParams(stringObjectEntry, jsonBean.getUrl()));
             jsonBean.setBody(replaceParams(stringObjectEntry, jsonBean.getBody()));
@@ -55,16 +57,11 @@ public interface Strategy<T> {
 
     }
 
+    // 用参数文件中的key对应的值，替换原文件中的{name}
     default String replaceParams(Map.Entry<String, Object> stringObjectEntry, String oldStr) {
         return oldStr.replace("{" + stringObjectEntry.getKey() + "}", stringObjectEntry.getValue().toString() + getRandomStr());
     }
 
-    default String getResourcePath() {
-        URL resourcePathUrl = getClass().getClassLoader().getResource("");
-        if (Objects.isNull(resourcePathUrl)) throw new CustomizeException();
-        return resourcePathUrl.getPath();
-
-    }
 
     default String getRandomStr() {
         // 创建一个包含大写字母和数字的字符数组
